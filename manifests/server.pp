@@ -6,13 +6,16 @@
 #   class xinetd if use_xinetd is set to true
 #   class rsync
 #
+# xinetd_options may contain a hash of additional options for xinetd;
+# currently only "per_source" and "instances" are supported.
 class rsync::server(
-  $use_xinetd = true,
-  $address    = '0.0.0.0',
-  $motd_file  = 'UNSET',
-  $use_chroot = 'yes',
-  $uid        = 'nobody',
-  $gid        = 'nobody'
+  $use_xinetd     = true,
+  $address        = '0.0.0.0',
+  $motd_file      = 'UNSET',
+  $use_chroot     = 'yes',
+  $uid            = 'nobody',
+  $gid            = 'nobody'
+  $xinetd_options = {},
 ) inherits rsync {
 
   $conf_file = $::osfamily ? {
@@ -24,12 +27,27 @@ class rsync::server(
 
   if $use_xinetd {
     include xinetd
+
+    if has_key($xinetd_options, 'instances') {
+      $x_instances = $xinetd_options['instances']
+    } else {
+      $x_instances = undef
+    }
+
+    if has_key($xinetd_options, 'per_source') {
+      $x_per_source = $xinetd_options['per_source']
+    } else {
+      $x_per_source = undef
+    }
+
     xinetd::service { 'rsync':
       bind        => $address,
       port        => '873',
       server      => '/usr/bin/rsync',
       server_args => "--daemon --config ${conf_file}",
       require     => Package['rsync'],
+      per_source  => $x_per_source,
+      instances   => $x_instances,
     }
   } else {
     service { 'rsync':
