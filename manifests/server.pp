@@ -14,7 +14,7 @@ class rsync::server(
   $motd_file      = 'UNSET',
   $use_chroot     = 'yes',
   $uid            = 'nobody',
-  $gid            = 'nobody'
+  $gid            = 'nobody',
   $xinetd_options = {},
 ) inherits rsync {
 
